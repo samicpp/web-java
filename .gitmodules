@@ -1,0 +1,4 @@
+[submodule "java-http"]
+        path = http
+        url = https://github.com/samicpp/java-http
+

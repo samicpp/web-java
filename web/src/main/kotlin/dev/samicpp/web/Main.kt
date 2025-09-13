@@ -17,8 +17,8 @@ fun old_main() {
     }
 }
 
-fun main(){
-    val server=ServerSocket(3456)
+fun echo_test(){
+    val server=ServerSocket(3000)
     println("listening")
     while (true){
         val conn=server.accept()
@@ -30,8 +30,16 @@ fun main(){
                 val read=sock.read(buff)
                 val slice=buff.sliceArray(0..<read)
                 val str=slice.toString(Charsets.UTF_8) //Charsets.UTF_8
-                println("client said: \u001b[36m$str\u001b[0m")
+                println("client said [$read]: \u001b[36m$str\u001b[0m")
+                if (read==-1){
+                    println("client likely disconnected")
+                    break
+                }
             }
         }
     }
+}
+
+fun main(){
+    echo_test()
 }

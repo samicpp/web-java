@@ -34,3 +34,5 @@ gralde
 build
 .archive
 temp
+.idea
+local.properties

@@ -4,12 +4,11 @@ import dev.samicpp.http.HttpSocket
 import java.nio.file.Paths
 import java.nio.file.Path
 import java.nio.file.Files
+// import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
-
-
 
 fun handler(sock:HttpSocket){
     sock.client.apply { 
@@ -110,18 +109,30 @@ fun dirHandler(sock:HttpSocket,path:Path){
 }
 
 fun fileHandler(sock:HttpSocket,path:Path){
+    val file=path.toFile()
     val fileName=path.fileName.toString()
     val last=fileName.split(".").last()
     val def=mimeMap[last]
+    var isScript:String?=null
 
     sock.status=200
     sock.statusMessage="OK"
 
-    if(def!=null){
+    if(fileName.endsWith(".poly.js")) {
+        isScript="js"
+        sock.setHeader("Content-Type", "text/html")
+    } else if(fileName.endsWith(".poly.py")) {
+        isScript="python"
+        sock.setHeader("Content-Type", "text/html")
+    } else if(def!=null) {
         sock.setHeader("Content-Type", def)
-        sock.close(path.readBytes())
     } else {
         sock.setHeader("Content-Type", "application/octet-stream")
-        sock.close(path.readBytes())
+    }
+
+    if(isScript==null){
+        sock.close(file.readBytes())
+    } else {
+        execute(sock, file, isScript)
     }
 }

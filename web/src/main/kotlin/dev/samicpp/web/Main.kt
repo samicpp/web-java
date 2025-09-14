@@ -51,7 +51,7 @@ fun http_dump_test(){
         println("accepted connection from ${conn.remoteSocketAddress.toString()}")
         Thread.startVirtualThread{
             val hand=Http1Socket(TcpSocket(conn))
-            hand.read_client()
+            hand.readClient()
             hand.close("hello from ${hand.client.path}\n")
             hand.client.apply { 
                 println("\u001b[32mclient { \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n}\u001b[0m")
@@ -68,7 +68,7 @@ fun server(){
         println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\u001b[0m")
         Thread.startVirtualThread{
             val hand=Http1Socket(TcpSocket(conn))
-            hand.read_client()
+            hand.readClient()
             // hand.close("hello from ${hand.client.path}\n")
             handler(hand)
         }

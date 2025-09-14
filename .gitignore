@@ -37,3 +37,4 @@ temp
 .idea
 local.properties
 *.hprof
+.kotlin

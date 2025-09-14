@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    id("com.gradleup.shadow")
     application
 }
 
@@ -22,5 +23,14 @@ application {
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(24))
+    }
+}
+
+tasks.withType<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar> {
+    archiveBaseName.set("web-java")
+    archiveVersion.set("1.0.0")
+    destinationDirectory.set(rootProject.layout.buildDirectory.dir("jar-builds"))
+    manifest {
+        attributes["Main-Class"] = "dev.samicpp.web.MainKt"
     }
 }

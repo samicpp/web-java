@@ -80,6 +80,8 @@ var serve_dir="./public"
 var port=3000
 var host="0.0.0.0"
 
+val shared=mutableMapOf<String,Any?>()
+
 fun main(){
     // echo_test()
     // http_dump_test()
@@ -91,6 +93,10 @@ fun main(){
 
     val supported=polyCtx.getEngine().getLanguages()
     println("supported poly langs $supported")
+
+    // val shared=object{}
+    polyCtx.getBindings("js").putMember("shared",shared)
+    polyCtx.getBindings("python").putMember("shared",shared)
 
     server()
 }

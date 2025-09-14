@@ -1,3 +1,3 @@
-if(!globalThis.count)globalThis.count=0
+if(!shared.count)shared.count=0
 
-socket.close(`count at ${globalThis.count++}`)
+socket.close(`count at ${shared.count++}`)

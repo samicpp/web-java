@@ -7,7 +7,7 @@ import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Value
 import java.io.File
 
-val polyCtx=Context.newBuilder().allowHostAccess(HostAccess.ALL).allowIO(true).build()
+val polyCtx=Context.newBuilder()/*.allowHostAccess(HostAccess.ALL)*//*.allowIO(true)*/.allowAllAccess(true).build()
 private val ctxLock = java.util.concurrent.locks.ReentrantLock()
 
 fun execute(socket:HttpSocket,file:File,language:String="js"):Value{

@@ -39,3 +39,4 @@ local.properties
 *.hprof
 .kotlin
 .vscode
+/web/settings.json

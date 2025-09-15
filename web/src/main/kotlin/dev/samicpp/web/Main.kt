@@ -6,7 +6,11 @@ import dev.samicpp.http.Http1Socket
 import java.net.ServerSocket
 import java.net.InetAddress
 import java.lang.System
-
+import kotlin.io.path.readText
+import kotlinx.serialization.json.*
+import java.nio.file.Paths
+import java.nio.file.Path
+import java.nio.file.Files
 // val esc="\u001b"
 
 fun old_main() {
@@ -82,11 +86,21 @@ var host="0.0.0.0"
 val shared=mutableMapOf<String,Any?>()
 
 fun main(){
+    println("\u001b[35mweb service working directory\u001b[0m ${System.getProperty("user.dir")}")
     // echo_test()
     // http_dump_test()
     serve_dir=System.getenv("SERVE_DIR")?:serve_dir
     host=System.getenv("HOST_ADDRESS")?:host
     port=System.getenv("PORT")?.toInt()?:port
+
+    val jconf=Paths.get("./settings.json")
+    if(Files.exists(jconf)){
+        val map: Map<String, String> = Json.decodeFromString(jconf.readText())
+        
+        if(map["serve_dir"]!=null)serve_dir=map["serve_dir"]!!
+        if(map["host"]!=null)host=map["host"]!!
+        if(map["port"]!=null)port=map["port"]!!.toInt()
+    }
     
     println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\u001b[0m")
 
@@ -100,6 +114,8 @@ fun main(){
     poltCtx["shared"]=shared
 
     setup()
+
+    
 
     server()
 }

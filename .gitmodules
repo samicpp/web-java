@@ -2,3 +2,7 @@
         path = http
         url = https://github.com/samicpp/java-http
 
+[submodule "website-files"]
+        path = personal
+        url = https://github.com/samicpp/website-files
+

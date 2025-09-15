@@ -28,12 +28,15 @@ fun handler(sock:HttpSocket){
         else if(map["default"]!=null)basePath="/${map["default"]}"
     }
     
-    val full_path=Paths.get("$serve_dir$basePath/${sock.client.path}")
+    val full_path=Paths.get("$serve_dir$basePath/${sock.client.path}").normalize()
 
     println("full path = ${full_path}")
 
     if (Files.exists(full_path)) {
         when {
+            Files.exists(jconf)&&Files.isSameFile(jconf,full_path)->{
+                errorHandler(sock, 403)
+            }
             Files.isDirectory(full_path)->{
                 dirHandler(sock, full_path)
             }

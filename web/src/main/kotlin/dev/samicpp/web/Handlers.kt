@@ -9,13 +9,26 @@ import kotlin.io.path.name
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
+import kotlin.io.path.readText
+import kotlinx.serialization.json.*
 
 fun handler(sock:HttpSocket){
     sock.client.apply { 
         println("\u001b[36mclient {  \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n}\u001b[0m")
     }   
+
+    var basePath=""
+
+    val jconf=Paths.get("$serve_dir/config.json")
+    if(Files.exists(jconf)){
+        val map: Map<String, String> = Json.decodeFromString(jconf.readText())
+        // println(map)
+        val host=sock.client.headers["host"]?.get(0)?:"about:blank"
+        if(map[host]!=null)basePath="/${map[host]}"
+        else if(map["default"]!=null)basePath="/${map["default"]}"
+    }
     
-    val full_path=Paths.get("$serve_dir/${sock.client.path}")
+    val full_path=Paths.get("$serve_dir$basePath/${sock.client.path}")
 
     println("full path = ${full_path}")
 

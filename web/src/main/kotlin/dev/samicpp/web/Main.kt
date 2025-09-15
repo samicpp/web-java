@@ -3,7 +3,6 @@ package dev.samicpp.web
 import dev.samicpp.http.example
 import dev.samicpp.http.TcpSocket
 import dev.samicpp.http.Http1Socket
-import dev.samicpp.web.polyCtx
 import java.net.ServerSocket
 import java.net.InetAddress
 import java.lang.System
@@ -91,12 +90,16 @@ fun main(){
     
     println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\u001b[0m")
 
-    val supported=polyCtx.getEngine().getLanguages()
-    println("supported poly langs $supported")
+    // val supported=polyCtx.getEngine().getLanguages()
+    // println("supported poly langs $supported")
 
     // val shared=object{}
-    polyCtx.getBindings("js").putMember("shared",shared)
-    polyCtx.getBindings("python").putMember("shared",shared)
+    // polyCtx.getBindings("js").putMember("shared",shared)
+    // polyCtx.getBindings("python").putMember("shared",shared)
+
+    poltCtx["shared"]=shared
+
+    setup()
 
     server()
 }

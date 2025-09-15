@@ -1,4 +1,7 @@
-body{
+body,pre{
     color:aliceblue;
-    background-color:rgb(40, 45, 51)
+    background-color:rgb(40, 45, 51);
+    font-family: Arial, Helvetica, sans-serif;
+    word-break: break-all;
+    overflow-wrap: break-word;
 }

@@ -9,3 +9,4 @@ uses GraalVM JDK24 and has not been tested anywhere else
 - [ ] allow configuring everything about the server
 - [ ] support tls
 - [x] support dynamic content
+- [ ] add option for searching similar files when file doesnt exist

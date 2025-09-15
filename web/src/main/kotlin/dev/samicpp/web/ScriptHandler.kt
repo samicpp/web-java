@@ -1,26 +1,68 @@
 package dev.samicpp.web
 
 import dev.samicpp.http.HttpSocket
-import dev.samicpp.web.polyCtx
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Value
 import java.io.File
+import java.util.concurrent.locks.ReentrantLock
 
 
-internal val polyCtx:Context=Context.newBuilder()/*.allowHostAccess(HostAccess.ALL)*//*.allowIO(true)*/.allowAllAccess(true).build()
-private val ctxLock = java.util.concurrent.locks.ReentrantLock()
+// internal val polyCtx:Context=Context.newBuilder()/*.allowHostAccess(HostAccess.ALL)*//*.allowIO(true)*/.allowAllAccess(true).build()
+// private val ctxLock = java.util.concurrent.locks.ReentrantLock()
 
+internal val langs=listOf("js","python")
+internal val poltCtx=mutableMapOf<String,Any>()
+private val scpool=mutableListOf<ScriptContext>()
+internal var maxPools=100
+
+class ScriptContext(){
+    private val context:Context=Context.newBuilder().allowAllAccess(true).build()
+    private var locked=false
+    private val lock=ReentrantLock()
+    val isLocked get()=locked
+    init{
+        for ((name,prop) in poltCtx){
+            for (language in langs)context.getBindings(language).putMember(name,prop)
+        }
+    }
+    fun runScript(socket:HttpSocket,file:File,language:String):Value{
+        val code = file.readText(Charsets.UTF_8)
+        // ctxLock.lock()
+        lock.lock()
+        locked=true
+        try{
+            // getBindings(language)
+            context.getBindings(language).putMember("socket",socket)
+            val result=context.eval(language,code)
+            return result
+        } finally {
+            lock.unlock()
+            locked=false
+        }
+    }
+}
 
 fun execute(socket:HttpSocket,file:File,language:String="js"):Value{
-    val code = file.readText(Charsets.UTF_8)
-    ctxLock.lock()
-    try{
-        // getBindings(language)
-        polyCtx.getBindings(language).putMember("socket",socket)
-        val result=polyCtx.eval(language,code)
-        return result
-    } finally {
-        ctxLock.unlock()
+    for(ctxi in 0..<scpool.size){
+        val ctx=scpool[ctxi]
+        if(ctx.isLocked)continue
+        println("\u001b[32mfound engine context in pool\u001b[0m")
+        return ctx.runScript(socket, file, language)
+    }
+    if(scpool.size<maxPools){
+        val ctx=ScriptContext()
+        scpool.add(ctx)
+        println("no available contexts\n\u001b[33madding engine context to pool\u001b[0m")
+        return ctx.runScript(socket, file, language)
+    } else {
+        println("\u001b[31mwaiting for available engine context in pool\u001b[0m")
+        while(true){
+            for(ctxi in 0..<scpool.size){
+                val ctx=scpool[ctxi]
+                if(ctx.isLocked)continue
+                return ctx.runScript(socket, file, language)
+            }
+        }
     }
 }

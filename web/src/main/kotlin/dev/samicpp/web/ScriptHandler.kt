@@ -4,6 +4,7 @@ import dev.samicpp.http.HttpSocket
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.HostAccess
 import org.graalvm.polyglot.Value
+// import org.graalvm.polyglot.Engine
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
 
@@ -17,7 +18,8 @@ private val scpool=mutableListOf<ScriptContext>()
 internal var maxPools=100
 
 class ScriptContext(){
-    private val context:Context=Context.newBuilder().allowAllAccess(true).build()
+    // private val engine=org.graalvm.polyglot.Engine.create()
+    private val context=Context.newBuilder()/*.engine(engine)*/.allowAllAccess(true).allowExperimentalOptions(true).build()
     private var locked=false
     private val lock=ReentrantLock()
     val isLocked get()=locked

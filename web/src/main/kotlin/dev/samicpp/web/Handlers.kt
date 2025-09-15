@@ -97,7 +97,7 @@ fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String=""){
 }
 
 fun dirHandler(sock:HttpSocket,path:Path){
-    val parent=path.parent.fileName.toString()
+    val parent=path.fileName.toString()
     var hfile:Path?=null
 
     for(file in Files.list(path)){
@@ -119,7 +119,7 @@ fun dirHandler(sock:HttpSocket,path:Path){
         println("found file $hfile")
         fileHandler(sock, hfile)
     } else {
-        println("couldnt find file in $path")
+        println("couldnt find file in $path starting with $parent or index.")
         errorHandler(sock, 409)
     }
 }

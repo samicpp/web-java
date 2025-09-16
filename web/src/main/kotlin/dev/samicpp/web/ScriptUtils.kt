@@ -1,8 +1,8 @@
 package dev.samicpp.web
 
 // import java.util.concurrent.CompletableFuture
-// import java.util.concurrent.Executors
-// import java.util.concurrent.TimeUnit
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 
 fun setup(){
@@ -10,6 +10,19 @@ fun setup(){
         fun encode(str:String)=str.encodeToByteArray()
         fun decode(str:ByteArray)=str.decodeToString()
     }
+
+    val scheduler=Executors.newScheduledThreadPool(1){ Thread.ofVirtual().unstarted(it) }
+
+    poltCtx["Async"] = object {
+        fun timeout(delayMillis:Long,fn:()->Unit){
+            scheduler.schedule(
+                { fn() },
+                delayMillis,
+                TimeUnit.MILLISECONDS
+            )
+        }
+    }
+
     // poltCtx["Async"]=object{
     //     fun timeout(time:Long):CompletableFuture<Void>{
     //         val future = CompletableFuture<Void>()

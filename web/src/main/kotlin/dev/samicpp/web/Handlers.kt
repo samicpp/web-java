@@ -55,7 +55,7 @@ fun handler(sock:HttpSocket){
 
 }
 
-fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String=""){
+fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String="",error:Any=""){
     sock.status=code
     sock.statusMessage=status
     when(code){
@@ -82,7 +82,7 @@ fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String=""){
         500->{
             sock.statusMessage="Internal Server Error"
             sock.setHeader("Content-Type", "text/plain")
-            sock.close("500 Internal Server Error")
+            sock.close("500 Internal Server Error\n\n$message: ${error.toString()}")
         }
         501->{
             sock.statusMessage="Not Implemented"
@@ -149,6 +149,10 @@ fun fileHandler(sock:HttpSocket,path:Path){
     if(isScript==null){
         sock.close(file.readBytes())
     } else {
-        execute(sock, file, isScript)
+        try{
+            execute(sock, file, isScript)
+        }catch(err: Throwable){
+            errorHandler(sock, 500, "", "Script Errored\n", err)
+        }
     }
 }

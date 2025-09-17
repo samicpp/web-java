@@ -82,8 +82,10 @@ fun server(){
 var serve_dir="./public"
 var port=3000
 var host="0.0.0.0"
+var useContextPool=true
 
-val shared=mutableMapOf<String,Any?>()
+// val shared=ConcurrentHashMap<String,Any?>()
+//mutableMapOf<String,Any?>()
 
 fun main(){
     println("\u001b[35mweb service working directory\u001b[0m ${System.getProperty("user.dir")}")
@@ -100,6 +102,7 @@ fun main(){
         if(map["serve_dir"]!=null)serve_dir=map["serve_dir"]!!
         if(map["host"]!=null)host=map["host"]!!
         if(map["port"]!=null)port=map["port"]!!.toInt()
+        if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
     }
     
     println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\u001b[0m")
@@ -111,7 +114,7 @@ fun main(){
     // polyCtx.getBindings("js").putMember("shared",shared)
     // polyCtx.getBindings("python").putMember("shared",shared)
 
-    poltCtx["shared"]=shared
+    // poltCtx["shared"]=shared
 
     setup()
 

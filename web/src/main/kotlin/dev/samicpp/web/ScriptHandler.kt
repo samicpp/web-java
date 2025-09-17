@@ -49,13 +49,13 @@ fun execute(socket:HttpSocket,file:File,language:String="js"):Value{
     for(ctxi in 0..<scpool.size){
         val ctx=scpool[ctxi]
         if(ctx.isLocked)continue
-        println("\u001b[32mfound engine context in pool\u001b[0m")
+        println("\u001b[32mfound engine context in pool ($ctxi)\u001b[0m")
         return ctx.runScript(socket, file, language)
     }
     if(scpool.size<maxPools){
         val ctx=ScriptContext()
         scpool.add(ctx)
-        println("no available contexts\n\u001b[33madding engine context to pool\u001b[0m")
+        println("no available contexts\n\u001b[33madding engine context to pool (${scpool.size-1})\u001b[0m")
         return ctx.runScript(socket, file, language)
     } else {
         println("\u001b[31mwaiting for available engine context in pool\u001b[0m")

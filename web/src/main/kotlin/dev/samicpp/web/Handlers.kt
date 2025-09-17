@@ -152,6 +152,8 @@ fun fileHandler(sock:HttpSocket,path:Path){
         try{
             execute(sock, file, isScript)
         }catch(err: Throwable){
+            println("\u001b[31mscript error\u001b[0m")
+            println(err)
             errorHandler(sock, 500, "", "Script Errored\n", err)
         }
     }

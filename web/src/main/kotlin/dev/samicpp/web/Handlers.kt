@@ -27,10 +27,13 @@ fun handler(sock:HttpSocket){
         if(map[host]!=null)basePath="/${map[host]}"
         else if(map["default"]!=null)basePath="/${map["default"]}"
     }
-    
-    val full_path=Paths.get("$serve_dir$basePath/${sock.client.path}").normalize()
+    val full_path_str="$serve_dir$basePath/${sock.client.path}"
+    var full_path_tmp=full_path_str.replace(Regex("\\?.*"), "")
+        full_path_tmp=full_path_tmp.replace(Regex("\\/\\.{1,2}(?=\\/|$)"), "/")
+        full_path_tmp=full_path_tmp.replace(Regex("\\/+"), "/")
+    val full_path=Paths.get(full_path_tmp).normalize()
 
-    println("full path = ${full_path}")
+    println("full path = $full_path\nstring ver = $full_path_str\nfinal ver = $full_path_tmp")
 
     if (Files.exists(full_path)) {
         when {

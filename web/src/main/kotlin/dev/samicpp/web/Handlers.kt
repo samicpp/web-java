@@ -22,10 +22,11 @@ fun handler(sock:HttpSocket){
     val jconf=Paths.get("$serve_dir/config.json")
     if(Files.exists(jconf)){
         val map: Map<String, String> = Json.decodeFromString(jconf.readText())
-        // println(map)
         val host=sock.client.headers["host"]?.get(0)?:"about:blank"
         if(map[host]!=null)basePath="/${map[host]}"
         else if(map["default"]!=null)basePath="/${map["default"]}"
+        // println(map)
+        // println(host)
     }
     val full_path_str="$serve_dir$basePath/${sock.client.path}"
     var full_path_tmp=full_path_str.replace(Regex("\\?.*"), "")
@@ -33,7 +34,7 @@ fun handler(sock:HttpSocket){
         full_path_tmp=full_path_tmp.replace(Regex("\\/+"), "/")
     val full_path=Paths.get(full_path_tmp).normalize()
 
-    println("full path = $full_path\nstring ver = $full_path_str\nfinal ver = $full_path_tmp")
+    // println("full path = $full_path\nstring ver = $full_path_str\nfinal ver = $full_path_tmp")
 
     if (Files.exists(full_path)) {
         when {

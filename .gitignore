@@ -40,3 +40,4 @@ local.properties
 .kotlin
 .vscode
 /web/settings.json
+# /web/src/main/kotlin/dev/samicpp/web/test

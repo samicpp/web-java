@@ -118,7 +118,7 @@ fun main(){
 
     setup()
 
-    
+    HpackRoundTripTest.main()
 
     server()
 }

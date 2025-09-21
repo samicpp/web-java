@@ -11,6 +11,6 @@ note: you cannot freely pass some values around as that may trigger a thread acc
 - [x] serve files
 - [x] search apropriate file when requests points to directory
 - [ ] allow configuring everything about the server
-- [ ] support tls
+- [x] support tls
 - [x] support dynamic content
 - [ ] add option for searching similar files when file doesnt exist

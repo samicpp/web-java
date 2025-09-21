@@ -6,6 +6,7 @@ import dev.samicpp.http.Http1Socket
 import dev.samicpp.http.Http2Connection
 import dev.samicpp.http.Http2Settings
 import java.net.ServerSocket
+import javax.net.ssl.*
 
 
 fun echo_test(){
@@ -90,4 +91,8 @@ fun http2_upgrade_test(){
             }
         }
     }
+}
+
+fun tls_serve_test(){
+
 }

@@ -1,6 +1,7 @@
 package dev.samicpp.web
 
 import dev.samicpp.http.HttpSocket
+import dev.samicpp.http.Compression as HttpCompression
 import java.nio.file.Paths
 import java.nio.file.Path
 import java.nio.file.Files
@@ -35,6 +36,8 @@ fun handler(sock:HttpSocket){
     val full_path=Paths.get(full_path_tmp).normalize()
 
     // println("full path = $full_path\nstring ver = $full_path_str\nfinal ver = $full_path_tmp")
+
+    if((sock.client.headers["accept-encoding"]?.get(0)?:"").contains("gzip"))sock.compression=HttpCompression.Gzip
 
     if (Files.exists(full_path)) {
         when {

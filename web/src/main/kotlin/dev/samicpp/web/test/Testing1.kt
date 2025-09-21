@@ -4,6 +4,7 @@ import dev.samicpp.http.example
 import dev.samicpp.http.TcpSocket
 import dev.samicpp.http.Http1Socket
 import dev.samicpp.http.Http2Connection
+import dev.samicpp.http.Http2Settings
 import java.net.ServerSocket
 
 
@@ -55,8 +56,12 @@ fun http2frame_dump_test(){
         println("accepted connection from ${conn.remoteSocketAddress.toString()}")
         Thread.startVirtualThread{
             val hand=Http2Connection(TcpSocket(conn))
+            hand.sendSettings(Http2Settings(max_frame_size=65535))
             val frames=hand.incoming()
+            hand.handle(frames)
             println(frames)
+            hand.sendHeaders(1, listOf(":status" to "200","content-type" to "text/plain"), false)
+            hand.sendData(1, "payload".encodeToByteArray(), true)
         }
     }
 }

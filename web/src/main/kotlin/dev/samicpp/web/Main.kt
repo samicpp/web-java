@@ -80,7 +80,7 @@ fun main(){
 
     // HpackRoundTripTest.main()
 
-    // server(port)
+    server(port)
     // http2frame_dump_test()
-    http2_upgrade_test()
+    // http2_upgrade_test()
 }

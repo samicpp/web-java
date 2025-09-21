@@ -6,6 +6,7 @@ import dev.samicpp.http.TlsSocket
 import dev.samicpp.http.Http1Socket
 import dev.samicpp.http.Http2Connection
 import dev.samicpp.http.Http2Settings
+import dev.samicpp.http.StreamData
 
 import java.net.ServerSocket
 import java.net.InetAddress
@@ -30,6 +31,13 @@ fun old_main() {
     }
 }
 
+var serverSettings=Http2Settings(
+    header_table_size=16777215,
+    initial_window_size=65535,
+    max_frame_size=65535,
+    max_concurrent_streams=1073741824,
+)
+
 fun server(port:Int,host:String){
     val listener=ServerSocket(port,50,InetAddress.getByName(host))
     println("listening")
@@ -44,6 +52,7 @@ fun server(port:Int,host:String){
         }
     }
 }
+
 fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
     val keyStore=KeyStore.getInstance("PKCS12")
     keyStore.load(java.io.FileInputStream(sslPath), sslPassword.toCharArray())
@@ -57,8 +66,11 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
     val serverSocket=sslContext.serverSocketFactory.createServerSocket(port,50,InetAddress.getByName(host)) as SSLServerSocket
 
     serverSocket.sslParameters = serverSocket.sslParameters.apply {
-        applicationProtocols = arrayOf("h2", "http/1.1")
+        applicationProtocols = alpn.split(";").toTypedArray()
     }
+    serverSocket.enabledProtocols=arrayOf("TLSv1.2","TLSv1.3")
+
+    println("alpn order is $alpn")
 
     println("ssl listening")
 
@@ -68,7 +80,7 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
         try{
             conn.startHandshake()
         }catch(err:Throwable){
-            println("\u001b[31merror occured\u001b[0m")
+            println("\u001b[31mhandshake error occured\u001b[0m")
             println(err)
             continue@server
         }
@@ -76,26 +88,47 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
         println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\nalpn = $alpn\u001b[0m")
 
         Thread.startVirtualThread{
-            if(alpn=="h2"||true){
+            if(alpn=="h2"){
                 val h2=Http2Connection(TlsSocket(conn))
-                h2.sendSettings(serverSettings)
+                h2.hpackd.updateDynamicTableSize(16777215)
+                h2.sendSettings(serverSettings); h2.flush()
+                println("sent settings $serverSettings")
+                h2.sendPing("hearbeat".encodeToByteArray())
+                // var empties=0
+                // print("buffer = [ ")
+                // for(b in serverSettings.toBuffer())print("${b.toInt() and 0xff}, ")
+                // println("]")
                 loop@
                 while(true){
+                    // if(!h2.available())continue@loop
                     try{
                         val frames=h2.incoming()
                         if(frames.isEmpty()){
                             println("\u001b[31mclient disconnected\u001b[0m")
+                            // empties+=1
+                            // if(h2.closed||empties>10)break@loop
+                            // h2.close()
                             break@loop
                         }
+                        println("received ${frames.size} frames [")
+                        for(frame in frames)println("   \u001b[34m${frame.type}\u001b[0m,")
+                        println("]")
+
                         val opened=h2.handle(frames)
+                        println("opened ${opened.size} streams")
                         for(s in opened){
                             val stream=h2.getStream(s)
                             stream.readClient()
                             Thread.startVirtualThread{ handler(stream) }
                         }
-                    } catch(err:Throwable){
+                        // h2.streamData[1]=StreamData(true,false,123456,listOf(":path" to "/", ":authority" to "localhost"))
+                        // h2.sendSettingsAck()
+                        // h2.sendHeaders(1, listOf(":status" to "500"))
+                        // h2.sendData(1,"client did NOT send headers".encodeToByteArray(),true)
+                        // h2.sendPing("hearbeat".encodeToByteArray())
+                    } catch(err:Exception){
                         println("\u001b[31merror occured\u001b[0m")
-                        println(err)
+                        err.printStackTrace()
                     }
                 }
             } else /*if(alpn=="http/1")*/ {
@@ -112,7 +145,7 @@ var port=3000
 var host="0.0.0.0"
 var useContextPool=true
 var pkcsCert:String?=null
-var serverSettings=Http2Settings()
+var alpn="http/1.1;h2"
 
 // val shared=ConcurrentHashMap<String,Any?>()
 //mutableMapOf<String,Any?>()
@@ -125,6 +158,7 @@ fun main(){
     port=System.getenv("PORT")?.toInt()?:port
     pkcsCert=System.getenv("SSL_PATH")?:pkcsCert
     var pkcsPass=System.getenv("SSL_PASSWORD")?:""
+    alpn=System.getenv("ALPN_ORDER")?:alpn
 
     val jconf=Paths.get("./settings.json")
     if(Files.exists(jconf)){
@@ -133,6 +167,7 @@ fun main(){
         if(map["serve_dir"]!=null)serve_dir=map["serve_dir"]!!
         if(map["host"]!=null)host=map["host"]!!
         if(map["port"]!=null)port=map["port"]!!.toInt()
+        if(map["alpn"]!=null)alpn=map["alpn"]!!
         if(map["sslPath"]!=null)pkcsCert=map["sslPath"]!!
         if(map["sslPassword"]!=null)pkcsPass=map["sslPassword"]!!
         if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
@@ -148,4 +183,5 @@ fun main(){
     // HpackRoundTripTest.main()
     // http2frame_dump_test()
     // http2_upgrade_test()
+    // tls_serve_test()
 }

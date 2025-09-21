@@ -14,3 +14,5 @@ note: you cannot freely pass some values around as that may trigger a thread acc
 - [x] support tls
 - [x] support dynamic content
 - [ ] add option for searching similar files when file doesnt exist
+- [x] allow http2 use through alpn
+- [ ] implement h2c upgrade

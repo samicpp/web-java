@@ -28,14 +28,16 @@ class ScriptContext(){
             for (language in langs)context.getBindings(language).putMember(name,prop)
         }
     }
-    fun runScript(socket:HttpSocket,file:File,language:String):Value{
+    fun runScript(socket:HttpSocket,file:File,language:String,customEnv:Map<String,Any>):Value{
         val code = file.readText(Charsets.UTF_8)
         // ctxLock.lock()
         lock.lock()
         locked=true
         try{
             // getBindings(language)
-            context.getBindings(language).putMember("socket",socket)
+            val bindings=context.getBindings(language)
+            bindings.putMember("socket",socket)
+            for((name,value) in customEnv)bindings.putMember(name,value)
             val result=context.eval(language,code)
             return result
         } finally {
@@ -45,25 +47,25 @@ class ScriptContext(){
     }
 }
 
-fun execute(socket:HttpSocket,file:File,language:String="js"):Value{
+fun execute(socket:HttpSocket,file:File,language:String="js",customEnv:Map<String,Any> =mapOf()):Value{
     for(ctxi in 0..<scpool.size){
         val ctx=scpool[ctxi]
         if(ctx.isLocked)continue
         println("\u001b[32mfound engine context in pool ($ctxi)\u001b[0m")
-        return ctx.runScript(socket, file, language)
+        return ctx.runScript(socket, file, language, customEnv)
     }
     if(scpool.size<maxPools){
         val ctx=ScriptContext()
         scpool.add(ctx)
         println("no available contexts\n\u001b[33madding engine context to pool (${scpool.size-1})\u001b[0m")
-        return ctx.runScript(socket, file, language)
+        return ctx.runScript(socket, file, language, customEnv)
     } else {
         println("\u001b[31mwaiting for available engine context in pool\u001b[0m")
         while(true){
             for(ctxi in 0..<scpool.size){
                 val ctx=scpool[ctxi]
                 if(ctx.isLocked)continue
-                return ctx.runScript(socket, file, language)
+                return ctx.runScript(socket, file, language, customEnv)
             }
         }
     }

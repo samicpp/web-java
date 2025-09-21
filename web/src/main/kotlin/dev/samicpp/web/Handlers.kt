@@ -5,12 +5,16 @@ import dev.samicpp.http.Compression as HttpCompression
 import java.nio.file.Paths
 import java.nio.file.Path
 import java.nio.file.Files
+import java.io.StringWriter
+import java.io.PrintWriter
 // import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.readBytes
 import kotlin.io.path.readText
+import kotlin.io.path.absolute
+import kotlin.io.path.absolutePathString
 import kotlinx.serialization.json.*
 
 fun handler(sock:HttpSocket){
@@ -157,11 +161,15 @@ fun fileHandler(sock:HttpSocket,path:Path){
         sock.close(file.readBytes())
     } else {
         try{
-            execute(sock, file, isScript)
-        }catch(err: Throwable){
-            println("\u001b[31mscript error\u001b[0m")
-            println(err)
-            errorHandler(sock, 500, "", "Script Errored\n", err)
+            execute(sock, file, isScript, mapOf("scriptPath" to file.absolutePath))
+        }catch(err: Exception){
+            val sw=StringWriter()
+            val pw=PrintWriter(sw)
+            err.printStackTrace(pw)
+            val serr=sw.toString()
+
+            println("\u001b[31mscript error\u001b[0m\n$serr")
+            if(!sock.sentHeaders)errorHandler(sock, 500, "Internal Server Error", "Script Errored\n", serr)
         }
     }
 }

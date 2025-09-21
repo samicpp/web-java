@@ -65,3 +65,29 @@ fun http2frame_dump_test(){
         }
     }
 }
+
+fun http2_upgrade_test(){
+    val server=ServerSocket(3000)
+    println("listening")
+    while (true){
+        val conn=server.accept()
+        println("accepted connection from ${conn.remoteSocketAddress.toString()}")
+        Thread.startVirtualThread{
+            val hand=Http1Socket(TcpSocket(conn))
+            val client=hand.readClient()
+            val upgrade=client.headers["upgrade"]?.get(0)
+            println("upgrade = $upgrade")
+            if(upgrade=="h2c"){
+                val h2=hand.h2c()
+                println("succesfully upgraded")
+                h2.sendSettings(Http2Settings(max_frame_size=65535))
+                val frames=h2.incoming()
+                h2.handle(frames)
+                h2.sendHeaders(1, listOf(":status" to "200","content-type" to "text/plain"), false)
+                h2.sendData(1, "payload".encodeToByteArray(), true)
+            } else {
+                hand.close("http2 when?")
+            }
+        }
+    }
+}

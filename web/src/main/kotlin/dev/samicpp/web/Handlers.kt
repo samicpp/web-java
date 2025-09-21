@@ -22,7 +22,7 @@ fun handler(sock:HttpSocket){
     val jconf=Paths.get("$serve_dir/config.json")
     if(Files.exists(jconf)){
         val map: Map<String, String> = Json.decodeFromString(jconf.readText())
-        val host=sock.client.headers["host"]?.get(0)?:"about:blank"
+        val host=sock.client.host
         if(map[host]!=null)basePath="/${map[host]}"
         else if(map["default"]!=null)basePath="/${map["default"]}"
         // println(map)

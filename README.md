@@ -5,7 +5,7 @@ uses GraalVM JDK24 and has not been tested anywhere else
 
 ## Polyglot
 This server supports executing JavaScript and Python code.
-note: you cannot freely pass Java classes around as that may trigger a multi threaded access exception
+note: you cannot freely pass some values around as that may trigger a thread access violation
 
 ## TODO
 - [x] serve files

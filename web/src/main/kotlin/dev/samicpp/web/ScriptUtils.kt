@@ -37,7 +37,7 @@ fun setup(){
     poltCtx["IO"]=object{
         fun Path(path:String)=java.nio.file.Paths.get(path)
         fun File(path:String)=java.io.File(path)
-        fun fetch(url:String,method:String="GET",body:String="",headers:List<Pair<String,String>> =listOf()):HttpResponse<String>{
+        fun fetch(url:String,method:String="GET",body:String="",headers:Map<String,String> =mapOf()):HttpResponse<ByteArray>{
             val client = HttpClient.newHttpClient()
 
             val request = HttpRequest.newBuilder()
@@ -45,7 +45,7 @@ fun setup(){
                 .method(method, BodyPublishers.ofString(body))
             for((header,value) in headers)request.setHeader(header, value)
 
-            val response=client.send(request.build(), HttpResponse.BodyHandlers.ofString())
+            val response=client.send(request.build(), HttpResponse.BodyHandlers.ofByteArray())
             return response
         }
     }

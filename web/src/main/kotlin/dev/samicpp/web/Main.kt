@@ -76,12 +76,25 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
 
     server@
     while (true) {
-        val conn=serverSocket.accept() as SSLSocket
+        val conn=try{
+            serverSocket.accept() as SSLSocket
+        } catch(err:Exception){
+            println("\u001b[31mtls error occured\u001b[0m")
+            err.printStackTrace()
+            continue@server
+        }
         try{
             conn.startHandshake()
-        }catch(err:Throwable){
+        }catch(err:Exception){
             println("\u001b[31mhandshake error occured\u001b[0m")
             println(err)
+            try { conn.close() } catch (_: Exception) {}
+            // err.printStackTrace()
+            continue@server
+        } catch(err:Throwable){
+            println("\u001b[31munkown handshake error occured\u001b[0m")
+            println(err)
+            try { conn.close() } catch (_: Exception) {}
             continue@server
         }
         val alpn=conn.applicationProtocol
@@ -129,6 +142,9 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
                     } catch(err:Exception){
                         println("\u001b[31merror occured\u001b[0m")
                         err.printStackTrace()
+                    } catch(err:Throwable){
+                        println("\u001b[31munkown error occured\u001b[0m")
+                        println(err)
                     }
                 }
             } else /*if(alpn=="http/1")*/ {
@@ -175,7 +191,7 @@ fun main(){
     
     println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\nuses tls = ${pkcsCert!=null}\u001b[0m")
 
-
+    Debug.start()
 
     setup()
     if(pkcsCert!=null)sslServer(pkcsCert!!,pkcsPass,port,host)

@@ -127,6 +127,12 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
                         for(frame in frames)println("   \u001b[34m${frame.type}\u001b[0m,")
                         println("]")
 
+                        for(frame in frames){
+                            when(frame.stringType){
+                                "Settings"->println("client sent settings ${frame.settings}")
+                            }
+                        }
+
                         val opened=h2.handle(frames)
                         println("opened ${opened.size} streams")
                         for(s in opened){

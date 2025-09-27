@@ -22,28 +22,39 @@ fun handler(sock:HttpSocket){
         println("\u001b[36mclient {  \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n}\u001b[0m")
     }   
 
-    var basePath=""
+    var routerPath:String?=null
+    var basePath="/"
 
     val jconf=Paths.get("$serve_dir/config.json")
     if(Files.exists(jconf)){
-        val map: Map<String, String> = Json.decodeFromString(jconf.readText())
+        val map: Map<String, List<String>> = Json.decodeFromString(jconf.readText())
         val host=sock.client.host
-        if(map[host]!=null)basePath="/${map[host]}"
-        else if(map["default"]!=null)basePath="/${map["default"]}"
+        var key="default"
+        if(host in map)key=host
+        basePath="/${map[key]!![0]}"
+
+        routerPath=map[key]?.getOrNull(1)
         // println(map)
         // println(host)
     }
-    val full_path_str="$serve_dir$basePath/${sock.client.path}"
+    val full_path_str="$serve_dir/$basePath/${sock.client.path}"
     var full_path_tmp=full_path_str.replace(Regex("\\?.*"), "")
         full_path_tmp=full_path_tmp.replace(Regex("\\/\\.{1,2}(?=\\/|$)"), "/")
         full_path_tmp=full_path_tmp.replace(Regex("\\/+"), "/")
     val full_path=Paths.get(full_path_tmp).normalize()
 
+    val router:Path?=
+    if(routerPath!=null) Paths.get("$serve_dir/$basePath/$routerPath").normalize()
+    else null
     // println("full path = $full_path\nstring ver = $full_path_str\nfinal ver = $full_path_tmp")
 
     if((sock.client.headers["accept-encoding"]?.get(0)?:"").contains("gzip"))sock.compression=HttpCompression.Gzip
 
-    if (Files.exists(full_path)) {
+    if(router!=null&&Files.exists(router)&&Files.isRegularFile(router)) {
+        
+        fileHandler(sock, router)
+
+    } else if (Files.exists(full_path)) {
         when {
             Files.exists(jconf)&&Files.isSameFile(jconf,full_path)->{
                 errorHandler(sock, 403)
@@ -66,7 +77,7 @@ fun handler(sock:HttpSocket){
 
 }
 
-fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String="",error:Any=""){
+fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String="",error:String=""){
     sock.status=code
     sock.statusMessage=status
     when(code){
@@ -93,7 +104,7 @@ fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String="",err
         500->{
             sock.statusMessage="Internal Server Error"
             sock.setHeader("Content-Type", "text/plain")
-            sock.close("500 Internal Server Error\n\n$message: ${error.toString()}")
+            sock.close("500 Internal Server Error\n\n$message: $error")
         }
         501->{
             sock.statusMessage="Not Implemented"

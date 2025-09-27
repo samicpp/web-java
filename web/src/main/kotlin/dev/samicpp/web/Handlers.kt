@@ -19,7 +19,7 @@ import kotlinx.serialization.json.*
 
 fun handler(sock:HttpSocket){
     sock.client.apply { 
-        println("\u001b[36mclient {  \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n}\u001b[0m")
+        println("\u001b[36mclient {  \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n}\u001b[0m")
     }   
 
     var routerPath:String?=null

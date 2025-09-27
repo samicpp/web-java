@@ -7,6 +7,9 @@ import java.nio.file.Path
 import java.nio.file.Files
 import java.io.StringWriter
 import java.io.PrintWriter
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
 // import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
@@ -15,7 +18,13 @@ import kotlin.io.path.readBytes
 import kotlin.io.path.readText
 import kotlin.io.path.absolute
 import kotlin.io.path.absolutePathString
+import kotlin.text.startsWith
 import kotlinx.serialization.json.*
+
+fun httpDate():String {
+    val now=ZonedDateTime.now(ZoneOffset.UTC)
+    return DateTimeFormatter.RFC_1123_DATE_TIME.format(now)
+}
 
 fun handler(sock:HttpSocket){
     sock.client.apply { 
@@ -25,6 +34,24 @@ fun handler(sock:HttpSocket){
     var routerPath:String?=null
     var basePath="/"
 
+    val headers=mapOf(
+        "Date" to httpDate(),
+        "Server" to "ChromeCast-BackgroundMediaServer/94.1337.666",
+
+        "Access-Control-Allow-Origin" to "*",
+        "Access-Control-Allow-Methods" to "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers" to "*",
+        "Access-Control-Allow-Credentials" to "true",
+        "Access-Control-Allow-Private-Network" to "true",
+
+        "Content-Security-Policy" to "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors *;",
+        "Permissions-Policy" to "camera=*, microphone=*, geolocation=*, clipboard-read=*, clipboard-write=*, fullscreen=*, accelerometer=*, gyroscope=*, magnetometer=*, payment=*",
+    )
+    
+    for((name,value) in headers) sock.setHeader(name, value)
+    
+
+    // TODO: make values use regex
     val jconf=Paths.get("$serve_dir/config.json")
     if(Files.exists(jconf)){
         val map: Map<String, List<String>> = Json.decodeFromString(jconf.readText())
@@ -158,19 +185,21 @@ fun fileHandler(sock:HttpSocket,path:Path){
 
     if(fileName.endsWith(".poly.js")) {
         isScript="js"
-        sock.setHeader("Content-Type", "text/html")
     } else if(fileName.endsWith(".poly.py")) {
         isScript="python"
-        sock.setHeader("Content-Type", "text/html")
     } else if(def!=null) {
-        sock.setHeader("Content-Type", def)
+        if(def.startsWith("text")) sock.setHeader("Content-Type", "$def; charset=utf-8")
+        else sock.setHeader("Content-Type", def)
     } else {
         sock.setHeader("Content-Type", "application/octet-stream")
     }
 
     if(isScript==null){
+        sock.setHeader("Cache-Control", "public, max-age=15")
         sock.close(file.readBytes())
     } else {
+        sock.setHeader("Content-Type", "text/html; charset=utf-8")
+        sock.setHeader("Cache-Control", "public, max-age=5")
         try{
             execute(sock, file, isScript, mapOf("scriptPath" to file.absolutePath))
         }catch(err: Exception){

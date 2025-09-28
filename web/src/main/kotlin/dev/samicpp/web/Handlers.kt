@@ -37,6 +37,8 @@ fun handler(sock:HttpSocket){
     val headers=mapOf(
         "Date" to httpDate(),
         "Server" to "ChromeCast-BackgroundMediaServer/94.1337.666",
+        "X-Content-Type-Options" to "nosniff",
+        "X-Powered-By" to "SimpleHTTP/0.6 Python/3.13.7",
 
         "Access-Control-Allow-Origin" to "*",
         "Access-Control-Allow-Methods" to "GET, POST, PUT, DELETE, OPTIONS",

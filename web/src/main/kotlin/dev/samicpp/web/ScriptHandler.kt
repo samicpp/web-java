@@ -12,13 +12,15 @@ import java.util.concurrent.locks.ReentrantLock
 // internal val polyCtx:Context=Context.newBuilder()/*.allowHostAccess(HostAccess.ALL)*//*.allowIO(true)*/.allowAllAccess(true).build()
 // private val ctxLock = java.util.concurrent.locks.ReentrantLock()
 
-internal val langs=listOf("js","python")
+// internal val langs=listOf("js","python")
 internal val poltCtx=mutableMapOf<String,Any>()
 internal val scpool=mutableListOf<ScriptContext>()
 internal var maxPools=100
 
 class ScriptContext(){
     // private val engine=org.graalvm.polyglot.Engine.create()
+    val langs=listOf("js","python")
+    
     private val context=Context.newBuilder()/*.engine(engine)*/.allowAllAccess(true).allowExperimentalOptions(true).build()
     private var locked=false
     private val lock=ReentrantLock()
@@ -29,6 +31,9 @@ class ScriptContext(){
         }
     }
     fun runScript(socket:HttpSocket,file:File,language:String,customEnv:Map<String,Any>):Value{
+        
+        if(language !in langs) throw Exception("language not supported")
+
         val code = file.readText(Charsets.UTF_8)
         // ctxLock.lock()
         lock.lock()

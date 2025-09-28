@@ -38,6 +38,9 @@ fun setup(warmup:Int=3){
                 TimeUnit.MILLISECONDS
             )
         }
+        fun immediate(fn:()->Unit){
+            Thread.startVirtualThread(fn)
+        }
     }
     poltCtx["shared"]=ConcurrentHashMap<String,Any?>()
     poltCtx["Concurrent"]=object{

@@ -185,6 +185,7 @@ fun main(){
     var pkcsPass=System.getenv("SSL_PASSWORD")?:""
     alpn=System.getenv("ALPN_ORDER")?:alpn
     var warmup=System.getenv("POLYGLOT_WARMUP")?:"1"
+    var pools=System.getenv("POLYGLOT_POOLS")?:"20"
 
     val jconf=Paths.get("./settings.json")
     if(Files.exists(jconf)){
@@ -196,6 +197,7 @@ fun main(){
         if(map["alpn"]!=null)alpn=map["alpn"]!!
         if(map["sslPath"]!=null)pkcsCert=map["sslPath"]!!
         if(map["sslPassword"]!=null)pkcsPass=map["sslPassword"]!!
+        if(map["polyglotPools"]!=null)pools=map["polyglotPools"]!!
         if(map["polyglotWarmup"]!=null)warmup=map["polyglotWarmup"]!!
         if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
     }
@@ -203,6 +205,8 @@ fun main(){
     println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\nuses tls = ${pkcsCert!=null}\u001b[0m")
 
     Debug.start()
+
+    maxPools=pools.toInt()
 
     setup(warmup.toInt())
     if(pkcsCert!=null)sslServer(pkcsCert!!,pkcsPass,port,host)

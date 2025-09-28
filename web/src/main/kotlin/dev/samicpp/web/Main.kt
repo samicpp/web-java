@@ -83,24 +83,24 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
             err.printStackTrace()
             continue@server
         }
-        try{
-            conn.startHandshake()
-        }catch(err:Exception){
-            println("\u001b[31mhandshake error occured\u001b[0m")
-            println(err)
-            try { conn.close() } catch (_: Exception) {}
-            // err.printStackTrace()
-            continue@server
-        } catch(err:Throwable){
-            println("\u001b[31munkown handshake error occured\u001b[0m")
-            println(err)
-            try { conn.close() } catch (_: Exception) {}
-            continue@server
-        }
-        val alpn=conn.applicationProtocol
-        println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\nalpn = $alpn\u001b[0m")
-
         Thread.startVirtualThread{
+            try{
+                conn.startHandshake()
+            }catch(err:Exception){
+                println("\u001b[31mhandshake error occured\u001b[0m")
+                println(err)
+                try { conn.close() } catch (_: Exception) {}
+                // err.printStackTrace()
+                return@startVirtualThread
+            } catch(err:Throwable){
+                println("\u001b[31munkown handshake error occured\u001b[0m")
+                println(err)
+                try { conn.close() } catch (_: Exception) {}
+                return@startVirtualThread
+            }
+            val alpn=conn.applicationProtocol
+            println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\nalpn = $alpn\u001b[0m")
+
             if(alpn=="h2"){
                 val h2=Http2Connection(TlsSocket(conn))
                 h2.hpackd.updateDynamicTableSize(16777215)

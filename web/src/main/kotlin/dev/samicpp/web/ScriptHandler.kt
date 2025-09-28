@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock
 
 internal val langs=listOf("js","python")
 internal val poltCtx=mutableMapOf<String,Any>()
-private val scpool=mutableListOf<ScriptContext>()
+internal val scpool=mutableListOf<ScriptContext>()
 internal var maxPools=100
 
 class ScriptContext(){

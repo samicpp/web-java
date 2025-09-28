@@ -2,6 +2,7 @@ package dev.samicpp.web
 
 
 import dev.samicpp.http.HttpSocket
+import dev.samicpp.http.FakeHttpSocket
 
 // import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
@@ -14,9 +15,13 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpRequest.BodyPublishers
+import java.net.InetSocketAddress
+import java.net.SocketAddress
+import java.nio.file.Paths
+import kotlin.collections.listOf
 
 
-fun setup(){
+fun setup(warmup:Int=3){
     val scheduler=Executors.newScheduledThreadPool(1){ Thread.ofVirtual().unstarted(it) }
    
     poltCtx["TextTranscoder"]=object{
@@ -81,4 +86,15 @@ fun setup(){
     //         // }
     //     }
     // }
+
+    // makes sure atleast 1 context is already loaded
+    val script=Paths.get("./preload.js").normalize().toFile()
+
+    println("\u001b[96mwarming up $warmup script contexts\u001b[0m")
+    for(i in 0 until warmup) {
+        val ctx=ScriptContext()
+        scpool.add(ctx)
+        println("\u001b[94mwarmed up $i and added to pool\u001b[0m")
+        ctx.runScript(FakeHttpSocket(), script, "js", mapOf())
+    }
 }

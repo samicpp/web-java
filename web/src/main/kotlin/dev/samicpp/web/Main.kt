@@ -181,6 +181,7 @@ fun main(){
     pkcsCert=System.getenv("SSL_PATH")?:pkcsCert
     var pkcsPass=System.getenv("SSL_PASSWORD")?:""
     alpn=System.getenv("ALPN_ORDER")?:alpn
+    var warmup=System.getenv("POLYGLOT_WARMUP")?:"1"
 
     val jconf=Paths.get("./settings.json")
     if(Files.exists(jconf)){
@@ -192,6 +193,7 @@ fun main(){
         if(map["alpn"]!=null)alpn=map["alpn"]!!
         if(map["sslPath"]!=null)pkcsCert=map["sslPath"]!!
         if(map["sslPassword"]!=null)pkcsPass=map["sslPassword"]!!
+        if(map["polyglotWarmup"]!=null)warmup=map["polyglotWarmup"]!!
         if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
     }
     
@@ -199,7 +201,7 @@ fun main(){
 
     Debug.start()
 
-    setup()
+    setup(warmup.toInt())
     if(pkcsCert!=null)sslServer(pkcsCert!!,pkcsPass,port,host)
     else server(port,host)
     // HpackRoundTripTest.main()

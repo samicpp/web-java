@@ -18,6 +18,8 @@ import java.net.http.HttpRequest.BodyPublishers
 import java.net.InetSocketAddress
 import java.net.SocketAddress
 import java.nio.file.Paths
+import java.time.Instant
+import java.time.Duration
 import kotlin.collections.listOf
 
 
@@ -90,11 +92,16 @@ fun setup(warmup:Int=3){
     // makes sure atleast 1 context is already loaded
     val script=Paths.get("./preload.js").normalize().toFile()
 
+    val start=Instant.now()
+
     println("\u001b[96mwarming up $warmup script contexts\u001b[0m")
     for(i in 0 until warmup) {
         val ctx=ScriptContext()
         scpool.add(ctx)
-        println("\u001b[94mwarmed up $i and added to pool\u001b[0m")
         ctx.runScript(FakeHttpSocket(), script, "js", mapOf())
+        
+        val end=Instant.now()
+        val diff=Duration.between(start, end)
+        println("\u001b[94mwarmed up $i and added to pool\u001b[0m [${diff.toMinutes()}m ${diff.toSeconds()%60}s ${diff.toMillis()%1000}ms]")
     }
 }

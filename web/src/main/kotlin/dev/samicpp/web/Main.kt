@@ -18,6 +18,7 @@ import java.nio.file.Path
 import java.nio.file.Files
 import javax.net.ssl.*
 import java.security.KeyStore
+import java.time.Instant
 // val esc="\u001b"
 
 fun old_main() {
@@ -171,6 +172,8 @@ var alpn="http/1.1;h2"
 
 // val shared=ConcurrentHashMap<String,Any?>()
 //mutableMapOf<String,Any?>()
+
+val programStart=Instant.now()
 
 fun main(){
     println("\u001b[35mweb service working directory\u001b[0m ${System.getProperty("user.dir")}")

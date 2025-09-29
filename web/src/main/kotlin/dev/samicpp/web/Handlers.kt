@@ -10,6 +10,7 @@ import java.io.PrintWriter
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.ZoneOffset
+import java.time.Instant
 // import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
@@ -27,8 +28,9 @@ fun httpDate():String {
 }
 
 fun handler(sock:HttpSocket){
+    println("\u001b[35minvoked handler at \u001b[1m\u001b[95m${Instant.now()}\u001b[0m")
     sock.client.apply { 
-        println("\u001b[36mclient {  \n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n}\u001b[0m")
+        println("\u001b[36mclient {\n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n}\u001b[0m")
     }   
 
     var routerPath:String?=null

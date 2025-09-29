@@ -47,7 +47,7 @@ fun server(port:Int,host:String){
         println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\u001b[0m")
         Thread.startVirtualThread{
             val hand=Http1Socket(TcpSocket(conn))
-            hand.readClient()
+            try{ hand.readClient() } catch(err: Exception) { println("\u001b[31mcouldnt read client\u001b[0m"); err.printStackTrace() }
             // hand.close("hello from ${hand.client.path}\n")
             handler(hand)
         }
@@ -149,14 +149,17 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
                     } catch(err:Exception){
                         println("\u001b[31merror occured\u001b[0m")
                         err.printStackTrace()
-                    } catch(err:Throwable){
+                        h2.close(0x2,"internal server error")
+                        break@loop
+                    } /*catch(err:Throwable){
                         println("\u001b[31munkown error occured\u001b[0m")
                         println(err)
-                    }
+                        break@loop
+                    }*/
                 }
             } else /*if(alpn=="http/1")*/ {
                 val hand=Http1Socket(TlsSocket(conn))
-                hand.readClient()
+                try{ hand.readClient() } catch(err: Exception) { println("\u001b[31mcouldnt read client\u001b[0m"); err.printStackTrace() }
                 handler(hand)
             }
         }

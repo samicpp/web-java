@@ -65,6 +65,7 @@ fun handler(sock:HttpSocket){
         val host=sock.client.host
         var key="default"
 
+        if(scheme+host+sock.client.path in map)key=scheme+host+sock.client.path
         if(scheme+host in map)key=scheme+host
         else if(host in map)key=host
         else {

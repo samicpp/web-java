@@ -11,6 +11,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.ZoneOffset
 import java.time.Instant
+import java.util.regex.Pattern
 // import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
@@ -55,13 +56,26 @@ fun handler(sock:HttpSocket){
     for((name,value) in headers) sock.setHeader(name, value)
     
 
-    // TODO: make values use regex
+    // TODO: cache config until change
     val jconf=Paths.get("$serve_dir/config.json")
     if(Files.exists(jconf)){
         val map: Map<String, List<String>> = Json.decodeFromString(jconf.readText())
+        val scheme=if(sock.isHttps())"https://" else "http://"
         val host=sock.client.host
         var key="default"
-        if(host in map)key=host
+        
+        if(scheme+host in map)key=scheme+host
+        else if(host in map)key=host
+        else {
+            match@
+            for((entry,_) in map){
+                val reg=Pattern.compile(entry)
+                if(reg.matcher(scheme+host+sock.client.path).matches()){
+                    key=entry
+                    break@match
+                }
+            }
+        }
         basePath="/${map[key]!![0]}"
 
         routerPath=map[key]?.getOrNull(1)

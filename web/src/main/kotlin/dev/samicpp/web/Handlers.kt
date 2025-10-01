@@ -87,7 +87,7 @@ fun handler(sock:HttpSocket){
         // println(host)
     }
     val full_path_str="$serve_dir/$basePath/${sock.client.path}"
-    var full_path_tmp=full_path_str.replace(Regex("\\|.*"), "")
+    var full_path_tmp=full_path_str.replace(Regex("\\:.*"), "")
         full_path_tmp=full_path_tmp.replace(Regex("\\?.*"), "")
         full_path_tmp=full_path_tmp.replace(Regex("\\/\\.{1,2}(?=\\/|$)"), "/")
         full_path_tmp=full_path_tmp.replace(Regex("\\/+"), "/")

@@ -99,19 +99,25 @@ fun handler(sock:HttpSocket){
         
         fileHandler(sock, router)
 
-    } else if (Files.exists(full_path)) {
+    } else if (Files.exists(jconf)&&Files.isSameFile(jconf,full_path)) {
+        errorHandler(sock, 403)
+    } else {
+        fileDirErr(sock, full_path)
+    }
+
+}
+
+fun fileDirErr(sock:HttpSocket,path:Path){
+    if (Files.exists(path)) {
         when {
-            Files.exists(jconf)&&Files.isSameFile(jconf,full_path)->{
-                errorHandler(sock, 403)
+            Files.isDirectory(path)->{
+                dirHandler(sock, path)
             }
-            Files.isDirectory(full_path)->{
-                dirHandler(sock, full_path)
-            }
-            Files.isRegularFile(full_path)->{
-                fileHandler(sock, full_path)
+            Files.isRegularFile(path)->{
+                fileHandler(sock, path)
             }
             else->{
-                println("cannot handle file ${full_path.toString()}")
+                println("cannot handle file ${path.toString()}")
                 errorHandler(sock, 501)
             }
         }
@@ -119,7 +125,6 @@ fun handler(sock:HttpSocket){
         println("resource does not exist")
         errorHandler(sock, 404)
     }
-
 }
 
 fun errorHandler(sock:HttpSocket,code:Int,status:String="",message:String="",error:String=""){
@@ -191,6 +196,9 @@ fun dirHandler(sock:HttpSocket,path:Path){
     }
 }
 
+// TODO: implement custom dynamic `*.dyn.*` files (jsdyn and pydyn)
+// TODO: implement custom `*.redirect` files
+// TODO: implement custom `*.link` files
 fun fileHandler(sock:HttpSocket,path:Path){
     val file=path.toFile()
     val fileName=path.fileName.toString()

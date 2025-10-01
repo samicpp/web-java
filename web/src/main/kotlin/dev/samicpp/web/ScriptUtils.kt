@@ -64,9 +64,9 @@ fun setup(warmup:Int=3){
         }
     }
     poltCtx["ContentHandlers"]=object{
-        fun auto(sock:HttpSocket){
-            handler(sock)
-        }
+        // fun auto(sock:HttpSocket){
+        //     handler(sock)
+        // }
         fun error(sock:HttpSocket,code:Int,status:String="",message:String="",error:String=""){
             errorHandler(sock, code,status,message,error)
         }
@@ -75,6 +75,9 @@ fun setup(warmup:Int=3){
         }
         fun file(sock:HttpSocket,path:java.nio.file.Path){
             fileHandler(sock, path)
+        }
+        fun auto(sock:HttpSocket,path:java.nio.file.Path){
+            fileDirErr(sock, path)
         }
     }
 

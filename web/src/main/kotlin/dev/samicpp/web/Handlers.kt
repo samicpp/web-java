@@ -197,6 +197,7 @@ fun dirHandler(sock:HttpSocket,path:Path){
 }
 
 // TODO: implement custom dynamic `*.dyn.*` files (jsdyn and pydyn)
+// TODO: implement custom dynamic `*.var.*` files
 // TODO: implement custom `*.redirect` files
 // TODO: implement custom `*.link` files
 fun fileHandler(sock:HttpSocket,path:Path){
@@ -205,6 +206,7 @@ fun fileHandler(sock:HttpSocket,path:Path){
     val last=fileName.split(".").last()
     val def=mimeMap[last]
     var isScript:String?=null
+    var isSpecial:String?=null
 
     sock.status=200
     sock.statusMessage="OK"
@@ -213,6 +215,8 @@ fun fileHandler(sock:HttpSocket,path:Path){
         isScript="js"
     } else if(fileName.endsWith(".poly.py")) {
         isScript="python"
+    } else if(fileName.endsWith(".link")) {
+        isSpecial="link"
     } else if(def!=null) {
         if(def.startsWith("text")) sock.setHeader("Content-Type", "$def; charset=utf-8")
         else sock.setHeader("Content-Type", def)
@@ -220,10 +224,7 @@ fun fileHandler(sock:HttpSocket,path:Path){
         sock.setHeader("Content-Type", "application/octet-stream")
     }
 
-    if(isScript==null){
-        sock.setHeader("Cache-Control", "public, max-age=15")
-        sock.close(file.readBytes())
-    } else {
+    if(isScript!=null){
         sock.setHeader("Content-Type", "text/html; charset=utf-8")
         sock.setHeader("Cache-Control", "public, max-age=5")
         try{
@@ -237,5 +238,17 @@ fun fileHandler(sock:HttpSocket,path:Path){
             println("\u001b[31mscript error\u001b[0m\n$serr")
             if(!sock.sentHeaders)errorHandler(sock, 500, "Internal Server Error", "Script Errored\n", serr)
         }
+    } else if(isSpecial!=null) {
+        when(isSpecial){
+            "link"->{
+                val pathString=file.readText()
+                val newPath=Paths.get(pathString).normalize()
+                println("handling new provided path $newPath")
+                fileDirErr(sock, newPath)
+            }
+        }
+    } else {
+        sock.setHeader("Cache-Control", "public, max-age=15")
+        sock.close(file.readBytes())
     }
 }

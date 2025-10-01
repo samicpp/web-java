@@ -71,8 +71,10 @@ fun handler(sock:HttpSocket){
             match@
             for((entry,_) in map){
                 val reg=Pattern.compile(entry)
+                // println("mathcing $reg against ${scheme+host+sock.client.path}")
                 if(reg.matcher(scheme+host+sock.client.path).matches()){
                     key=entry
+                    // println("found match $reg")
                     break@match
                 }
             }
@@ -100,7 +102,7 @@ fun handler(sock:HttpSocket){
         
         fileHandler(sock, router)
 
-    } else if (Files.exists(jconf)&&Files.isSameFile(jconf,full_path)) {
+    } else if (Files.exists(full_path)&&Files.exists(jconf)&&Files.isSameFile(jconf,full_path)) {
         errorHandler(sock, 403)
     } else {
         fileDirErr(sock, full_path)
@@ -123,7 +125,7 @@ fun fileDirErr(sock:HttpSocket,path:Path){
             }
         }
     } else {
-        println("resource does not exist")
+        println("resource does not exist $path")
         errorHandler(sock, 404)
     }
 }

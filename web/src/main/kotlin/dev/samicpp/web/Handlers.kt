@@ -12,6 +12,7 @@ import java.time.format.DateTimeFormatter
 import java.time.ZoneOffset
 import java.time.Instant
 import java.util.regex.Pattern
+import java.net.InetSocketAddress
 // import java.io.File
 import kotlin.io.path.name
 import kotlin.io.path.isDirectory
@@ -197,9 +198,6 @@ fun dirHandler(sock:HttpSocket,path:Path){
 }
 
 // TODO: implement custom dynamic `*.dyn.*` files (jsdyn and pydyn)
-// TODO: implement custom dynamic `*.var.*` files
-// TODO: implement custom `*.redirect` files
-// TODO: implement custom `*.link` files
 fun fileHandler(sock:HttpSocket,path:Path){
     val file=path.toFile()
     val fileName=path.fileName.toString()
@@ -217,6 +215,11 @@ fun fileHandler(sock:HttpSocket,path:Path){
         isScript="python"
     } else if(fileName.endsWith(".link")) {
         isSpecial="link"
+    } else if(fileName.endsWith(".redirect")) {
+        isSpecial="redirect"
+    } else if(fileName.contains(".var.")) {
+        isSpecial="var"
+        if(def!=null)sock.setHeader("Content-Type", "$def; charset=utf-8")
     } else if(def!=null) {
         if(def.startsWith("text")) sock.setHeader("Content-Type", "$def; charset=utf-8")
         else sock.setHeader("Content-Type", def)
@@ -239,12 +242,32 @@ fun fileHandler(sock:HttpSocket,path:Path){
             if(!sock.sentHeaders)errorHandler(sock, 500, "Internal Server Error", "Script Errored\n", serr)
         }
     } else if(isSpecial!=null) {
+        println("file is special file $isSpecial")
+        val vars=mapOf(
+            "%PATH%" to sock.client.path,
+            "%HOST%" to sock.client.host,
+            "%SCHEME%" to if(sock.isHttps())"https://" else "http://",
+            "%IP%" to (sock.client.address as InetSocketAddress).hostName
+        )
         when(isSpecial){
             "link"->{
                 val pathString=file.readText()
                 val newPath=Paths.get(pathString).normalize()
                 println("handling new provided path $newPath")
                 fileDirErr(sock, newPath)
+            }
+            "redirect"->{
+                var url=file.readText()
+                for((vari,value) in vars)url=url.replace(vari,value)
+                sock.status=302
+                sock.statusMessage="Found"
+                sock.setHeader("Location", url)
+                sock.close()
+            }
+            "var"->{
+                var text=file.readText()
+                for((vari,value) in vars)text=text.replace(vari,value)
+                sock.close(text)
             }
         }
     } else {

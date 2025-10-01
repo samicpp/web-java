@@ -41,7 +41,7 @@ var serverSettings=Http2Settings(
 
 fun server(port:Int,host:String){
     val listener=ServerSocket(port,50,InetAddress.getByName(host))
-    println("listening")
+    println("\u001b[33mtcp listening on $host:$port\u001b[0m")
     while (true){
         val conn=listener.accept()
         println("\u001b[32maccepted connection from ${conn.remoteSocketAddress.toString()}\u001b[0m")
@@ -73,7 +73,7 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
 
     println("alpn order is $alpn")
 
-    println("ssl listening")
+    println("\u001b[32mssl listening on $host:$port\u001b[0m")
 
     server@
     while (true) {
@@ -167,7 +167,8 @@ fun sslServer(sslPath:String,sslPassword:String,port:Int,host:String){
 }
 
 var serve_dir="./public"
-var port=3000
+var ports=""
+var sslPorts=""
 var host="0.0.0.0"
 var useContextPool=true
 var pkcsCert:String?=null
@@ -183,7 +184,8 @@ fun main(){
     
     serve_dir=System.getenv("SERVE_DIR")?:serve_dir
     host=System.getenv("HOST_ADDRESS")?:host
-    port=System.getenv("PORT")?.toInt()?:port
+    ports=System.getenv("PORTS")?:ports
+    sslPorts=System.getenv("SSL_PORTS")?:ports
     pkcsCert=System.getenv("SSL_PATH")?:pkcsCert
     var pkcsPass=System.getenv("SSL_PASSWORD")?:""
     alpn=System.getenv("ALPN_ORDER")?:alpn
@@ -194,28 +196,39 @@ fun main(){
     if(Files.exists(jconf)){
         val map: Map<String, String> = Json.decodeFromString(jconf.readText())
         
-        if(map["serve_dir"]!=null)serve_dir=map["serve_dir"]!!
         if(map["host"]!=null)host=map["host"]!!
-        if(map["port"]!=null)port=map["port"]!!.toInt()
         if(map["alpn"]!=null)alpn=map["alpn"]!!
+        if(map["ports"]!=null)ports=map["ports"]!!
         if(map["sslPath"]!=null)pkcsCert=map["sslPath"]!!
+        if(map["sslPorts"]!=null)sslPorts=map["sslPorts"]!!
+        if(map["serve_dir"]!=null)serve_dir=map["serve_dir"]!!
         if(map["sslPassword"]!=null)pkcsPass=map["sslPassword"]!!
         if(map["polyglotPools"]!=null)pools=map["polyglotPools"]!!
         if(map["polyglotWarmup"]!=null)warmup=map["polyglotWarmup"]!!
-        if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
+        // if(map["useContextPool"]!=null)useContextPool=map["useContextPool"]!!.toBoolean()
     }
     
-    println("\u001b[32mserve dir = $serve_dir\naddress = $host:$port\nworking dir = ${System.getProperty("user.dir")}\nuses tls = ${pkcsCert!=null}\u001b[0m")
+    println("\u001b[32mserve dir = $serve_dir\nhost = $host\nworking dir = ${System.getProperty("user.dir")}\nuses tls = ${pkcsCert!=null}\nports = $ports\nssl ports = $sslPorts\u001b[0m")
 
     Debug.start()
 
     maxPools=pools.toInt()
 
     setup(warmup.toInt())
-    if(pkcsCert!=null)sslServer(pkcsCert!!,pkcsPass,port,host)
-    else server(port,host)
+
+    val threads=mutableListOf<Thread>()
+    if(pkcsCert!=null)for(port in sslPorts.split(";")){
+        if(port.isNotEmpty())threads.add(Thread{sslServer(pkcsCert!!,pkcsPass,port.trim().toInt(),host)})
+    }
+    for(port in ports.split(";")){
+        if(port.isNotBlank())threads.add(Thread{server(port.trim().toInt(),host)})
+    }
     // HpackRoundTripTest.main()
     // http2frame_dump_test()
     // http2_upgrade_test()
     // tls_serve_test()
+
+    println("main thread idling")
+    for(thread in threads)thread.start()
+    for(thread in threads)thread.join()
 }

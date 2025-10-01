@@ -57,13 +57,13 @@ fun handler(sock:HttpSocket){
     
 
     // TODO: cache config until change
-    val jconf=Paths.get("$serve_dir/config.json")
+    val jconf=Paths.get("$serve_dir/host-routes.json")
     if(Files.exists(jconf)){
         val map: Map<String, List<String>> = Json.decodeFromString(jconf.readText())
         val scheme=if(sock.isHttps())"https://" else "http://"
         val host=sock.client.host
         var key="default"
-        
+
         if(scheme+host in map)key=scheme+host
         else if(host in map)key=host
         else {

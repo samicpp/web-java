@@ -32,7 +32,7 @@ fun httpDate():String {
 fun handler(sock:HttpSocket){
     println("\u001b[35minvoked handler at \u001b[1m\u001b[95m${Instant.now()}\u001b[0m")
     sock.client.apply { 
-        println("\u001b[36mclient {\n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n}\u001b[0m")
+        println("\u001b[36mclient {\n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n   isHttps: ${sock.isHttps()}, \n}\u001b[0m")
     }   
 
     var routerPath:String?=null
@@ -56,6 +56,13 @@ fun handler(sock:HttpSocket){
     
     for((name,value) in headers) sock.setHeader(name, value)
     
+
+    // if(sock.client.headers["user-agent"]?.get(0)?.startsWith("python-requests")==true){
+    //     println("determined client is a malicious bot")
+    //     println("closing connection early")
+    //     val buff="${sock.client.address}\n".encodeToByteArray()
+    //     sock.close(buff)
+    // }
 
     // TODO: cache config until change
     val jconf=Paths.get("$serve_dir/host-routes.json")

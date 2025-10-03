@@ -22,6 +22,7 @@ import kotlin.io.path.readText
 import kotlin.io.path.absolute
 import kotlin.io.path.absolutePathString
 import kotlin.text.startsWith
+import kotlin.collections.findLast
 import kotlinx.serialization.json.*
 
 fun httpDate():String {
@@ -93,8 +94,14 @@ fun handler(sock:HttpSocket){
         // println(map)
         // println(host)
     }
-    val full_path_str="${sock.client.path}"
-    var full_path_tmp=full_path_str.replace(Regex("\\:.*"), "")
+    // val full_path_str="${sock.client.path}"
+    // TODO: make this configurable
+    val seperatorsInfront=listOf(">>","%3E%3E")
+    val seperatorsBehind=listOf("?",":","#")
+    var full_path_tmp="${sock.client.path}"
+        for(sep in seperatorsInfront)full_path_tmp=full_path_tmp.split(sep).last()
+        for(sep in seperatorsBehind)full_path_tmp=full_path_tmp.split(sep).first()
+        full_path_tmp=full_path_tmp.replace(Regex("\\:.*"), "")
         full_path_tmp="$serve_dir/$basePath/$full_path_tmp"
         full_path_tmp=full_path_tmp.replace(Regex("\\?.*"), "")
         full_path_tmp=full_path_tmp.replace(Regex("\\/\\.{1,2}(?=\\/|$)"), "/")
@@ -110,7 +117,7 @@ fun handler(sock:HttpSocket){
 
     if(router!=null&&Files.exists(router)&&Files.isRegularFile(router)) {
         
-        fileHandler(sock, router)
+        fileHandler(sock, router, mapOf("handlePath" to full_path))
 
     } else if (Files.exists(full_path)&&Files.exists(jconf)&&Files.isSameFile(jconf,full_path)) {
         errorHandler(sock, 403)
@@ -210,7 +217,7 @@ fun dirHandler(sock:HttpSocket,path:Path){
 }
 
 // TODO: implement custom dynamic `*.dyn.*` files (jsdyn and pydyn)
-fun fileHandler(sock:HttpSocket,path:Path){
+fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf()){
     val file=path.toFile()
     val fileName=path.fileName.toString()
     val last=fileName.split(".").last()
@@ -241,9 +248,11 @@ fun fileHandler(sock:HttpSocket,path:Path){
 
     if(isScript!=null){
         sock.setHeader("Content-Type", "text/html; charset=utf-8")
-        sock.setHeader("Cache-Control", "public, max-age=5")
+        // sock.setHeader("Cache-Control", "public, max-age=5")
         try{
-            execute(sock, file, isScript, mapOf("scriptPath" to file.absolutePath))
+            val env=mutableMapOf<String,Any>("scriptPath" to file.absolutePath)
+            for((k,v) in scriptExtras)env[k]=v
+            execute(sock, file, isScript, env)
         }catch(err: Exception){
             val sw=StringWriter()
             val pw=PrintWriter(sw)
@@ -283,7 +292,7 @@ fun fileHandler(sock:HttpSocket,path:Path){
             }
         }
     } else {
-        sock.setHeader("Cache-Control", "public, max-age=15")
+        // sock.setHeader("Cache-Control", "public, max-age=15")
         sock.close(file.readBytes())
     }
 }

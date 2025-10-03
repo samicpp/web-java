@@ -21,6 +21,7 @@ import java.nio.file.Paths
 import java.time.Instant
 import java.time.Duration
 import kotlin.collections.listOf
+import java.util.Base64
 
 
 fun setup(warmup:Int=3){
@@ -29,6 +30,9 @@ fun setup(warmup:Int=3){
     poltCtx["TextTranscoder"]=object{
         fun encode(str:String)=str.encodeToByteArray()
         fun decode(str:ByteArray)=str.decodeToString()
+
+        fun atob(str:String)=Base64.getDecoder().decode(str).decodeToString()
+        fun btoa(str:String)=Base64.getEncoder().encode(str.encodeToByteArray()).decodeToString()
     }
     poltCtx["Async"] = object {
         fun timeout(delayMillis:Long,fn:()->Unit){

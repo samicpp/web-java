@@ -64,6 +64,13 @@ fun handler(sock:HttpSocket){
     //     val buff="${sock.client.address}\n".encodeToByteArray()
     //     sock.close(buff)
     // }
+    
+    // TODO: make this configurable
+    val seperatorsInfront=listOf(">>","%3E%3E")
+    val seperatorsBehind=listOf("?",":","#")
+    var clientPath="${sock.client.path}"
+    for(sep in seperatorsInfront)clientPath=clientPath.split(sep).last()
+    for(sep in seperatorsBehind)clientPath=clientPath.split(sep).first()
 
     // TODO: cache config until change
     val jconf=Paths.get("$serve_dir/host-routes.json")
@@ -73,7 +80,7 @@ fun handler(sock:HttpSocket){
         val host=sock.client.host
         var key="default"
 
-        if(scheme+host+sock.client.path in map)key=scheme+host+sock.client.path
+        if(scheme+host+clientPath in map)key=scheme+host+clientPath
         if(scheme+host in map)key=scheme+host
         else if(host in map)key=host
         else {
@@ -81,7 +88,7 @@ fun handler(sock:HttpSocket){
             for((entry,_) in map){
                 val reg=Pattern.compile(entry)
                 // println("mathcing $reg against ${scheme+host+sock.client.path}")
-                if(reg.matcher(scheme+host+sock.client.path).matches()){
+                if(reg.matcher(scheme+host+clientPath).matches()){
                     key=entry
                     // println("found match $reg")
                     break@match
@@ -95,14 +102,7 @@ fun handler(sock:HttpSocket){
         // println(host)
     }
     // val full_path_str="${sock.client.path}"
-    // TODO: make this configurable
-    val seperatorsInfront=listOf(">>","%3E%3E")
-    val seperatorsBehind=listOf("?",":","#")
-    var full_path_tmp="${sock.client.path}"
-        for(sep in seperatorsInfront)full_path_tmp=full_path_tmp.split(sep).last()
-        for(sep in seperatorsBehind)full_path_tmp=full_path_tmp.split(sep).first()
-        full_path_tmp=full_path_tmp.replace(Regex("\\:.*"), "")
-        full_path_tmp="$serve_dir/$basePath/$full_path_tmp"
+    var full_path_tmp="$serve_dir/$basePath/$clientPath"
         full_path_tmp=full_path_tmp.replace(Regex("\\?.*"), "")
         full_path_tmp=full_path_tmp.replace(Regex("\\/\\.{1,2}(?=\\/|$)"), "/")
         full_path_tmp=full_path_tmp.replace(Regex("\\/+"), "/")

@@ -57,13 +57,14 @@ fun handler(sock:HttpSocket){
     
     for((name,value) in headers) sock.setHeader(name, value)
     
+    val userAgent=sock.client.headers["user-agent"]?.get(0)
 
-    // if(sock.client.headers["user-agent"]?.get(0)?.startsWith("python-requests")==true){
-    //     println("determined client is a malicious bot")
-    //     println("closing connection early")
-    //     val buff="${sock.client.address}\n".encodeToByteArray()
-    //     sock.close(buff)
-    // }
+    if(userAgent?.startsWith("python-requests")==true||userAgent?.startsWith("l9tcpid")==true){
+        println("determined client is a malicious bot")
+        println("closing connection early")
+        val buff="${sock.client.address}\n".encodeToByteArray()
+        sock.close(buff)
+    }
     
     // TODO: make this configurable
     val seperatorsInfront=listOf(">>","%3E%3E")

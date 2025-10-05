@@ -11,6 +11,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.ZoneOffset
 import java.time.Instant
+import java.time.Duration
 import java.util.regex.Pattern
 import java.net.InetSocketAddress
 // import java.io.File
@@ -31,7 +32,8 @@ fun httpDate():String {
 }
 
 fun handler(sock:HttpSocket){
-    println("\u001b[35minvoked handler at \u001b[1m\u001b[95m${Instant.now()}\u001b[0m")
+    val now=Instant.now()
+    println("\u001b[35minvoked handler at \u001b[1m\u001b[95m$now\u001b[0m")
     sock.client.apply { 
         println("\u001b[36mclient {\n   path: $path, \n   method: $method, \n   version: $version, \n   headers: $headers, \n   body[${body.size}]: \"${body.decodeToString()}\", \n   host: $host, \n   isHttps: ${sock.isHttps()}, \n}\u001b[0m")
     }   
@@ -126,6 +128,9 @@ fun handler(sock:HttpSocket){
         fileDirErr(sock, full_path)
     }
 
+    val end=Instant.now()
+    val diff=Duration.between(now,end)
+    println("\u001b[35mhandler finished after \u001b[1m\u001b[95m[${diff.toMinutes()}m ${diff.toSeconds()%60}s ${diff.toMillis()%1000}ms]\u001b[0m")
 }
 
 fun fileDirErr(sock:HttpSocket,path:Path){
@@ -247,7 +252,10 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
         sock.setHeader("Content-Type", "application/octet-stream")
     }
 
+    // println("file located at ${file.absolutePath}")
+
     if(isScript!=null){
+        println("handling script")
         sock.setHeader("Content-Type", "text/html; charset=utf-8")
         // sock.setHeader("Cache-Control", "public, max-age=5")
         try{
@@ -293,6 +301,7 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
             }
         }
     } else {
+        println("sending static file")
         // sock.setHeader("Cache-Control", "public, max-age=15")
         sock.close(file.readBytes())
     }

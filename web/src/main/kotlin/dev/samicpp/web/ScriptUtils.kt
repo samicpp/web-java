@@ -32,7 +32,7 @@ fun setup(warmup:Int=3){
         fun decode(str:ByteArray)=str.decodeToString()
 
         fun atob(str:String)=Base64.getDecoder().decode(str).decodeToString()
-        fun btoa(str:String)=Base64.getEncoder().encode(str.encodeToByteArray()).decodeToString()
+        fun btoa(str:String)=Base64.getEncoder().encodeToString(str.encodeToByteArray())
     }
     poltCtx["Async"] = object {
         fun timeout(delayMillis:Long,fn:()->Unit){

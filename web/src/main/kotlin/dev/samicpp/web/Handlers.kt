@@ -277,7 +277,8 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
             "%PATH%" to sock.client.path,
             "%HOST%" to sock.client.host,
             "%SCHEME%" to if(sock.isHttps())"https://" else "http://",
-            "%IP%" to (sock.client.address as InetSocketAddress).hostName
+            "%IP%" to (sock.client.address as InetSocketAddress).hostName,
+            "%FULL_IP%" to sock.client.address.toString(),
         )
         when(isSpecial){
             "link"->{
@@ -292,11 +293,13 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
                 sock.status=302
                 sock.statusMessage="Found"
                 sock.setHeader("Location", url)
+                println("sending off response to ${sock.client.path}")
                 sock.close()
             }
             "var"->{
                 var text=file.readText()
                 for((vari,value) in vars)text=text.replace(vari,value)
+                println("sending off response to ${sock.client.path}")
                 sock.close(text)
             }
         }
@@ -305,4 +308,6 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
         // sock.setHeader("Cache-Control", "public, max-age=15")
         sock.close(file.readBytes())
     }
+
+    println("fileHandler returned intact")
 }

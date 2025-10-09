@@ -124,7 +124,7 @@ fun handler(sock:HttpSocket){
 
     if(router!=null&&Files.exists(router)&&Files.isRegularFile(router)) {
         
-        fileHandler(sock, router, mapOf("handlePath" to full_path))
+        fileHandler(sock, router, full_path)
 
     } else if (Files.exists(full_path)&&Files.exists(jconf)&&Files.isSameFile(jconf,full_path)) {
         errorHandler(sock, 403)
@@ -202,18 +202,15 @@ fun dirHandler(sock:HttpSocket,path:Path){
     val parent=path.fileName.toString()
     var hfile:Path?=null
 
+    val seek=listOf(parent,"index",parent.replaceFirstChar{it.uppercase()},"Index")
+    println("looking for $seek")
+
     for(file in Files.list(path)){
         if(!file.isRegularFile())continue
         val fileName=file.fileName.toString()
-        when{
-            fileName.startsWith(parent)->{
-                hfile=file
-                break
-            }
-            fileName.startsWith("index.")->{
-                hfile=file
-                break
-            }
+        for(look in seek)if(fileName.startsWith(look)){
+            hfile=file
+            break
         }
     }
 
@@ -221,12 +218,12 @@ fun dirHandler(sock:HttpSocket,path:Path){
         println("found file $hfile")
         fileHandler(sock, hfile)
     } else {
-        println("couldnt find file in $path starting with $parent or index.")
+        println("couldnt find file in $path starting with $parent or index")
         errorHandler(sock, 409)
     }
 }
 
-fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf()){
+fun fileHandler(sock:HttpSocket,path:Path,handlePath:Path?=null){
     val file=path.toFile()
     val fileName=path.fileName.toString()
     val last=fileName.split(".").last()
@@ -264,11 +261,14 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
         // val cclass=entry?.first
         val plugin=entry?.second
 
-        if(plugin!=null&&plugin.alive){// cclass!!.getDeclaredField("alive").getBoolean(cinsta)
+        println("entry = $entry")
+        println("plugin.alive = ${plugin?.getAlive()}")
+
+        if(plugin!=null&&plugin.getAlive()){// cclass!!.getDeclaredField("alive").getBoolean(cinsta)
             println("class still available")
 
             // val handle=cclass.getMethod("handle", sock.javaClass)
-            plugin.handle(sock)
+            plugin.handle(sock,handlePath)
         } else {
             println("class not available")
 
@@ -276,7 +276,10 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
             val instance=clazz.getDeclaredConstructor().newInstance() as HttpHandler
             // val handle=clazz.getMethod("handle", sock.javaClass)
             // handle.invoke(instance, sock)
-            instance.handle(sock)
+            instance.init(file)
+            instance.handle(sock,handlePath)
+
+            // println("$clazz $instance")
 
             classCache[file.absolutePath]=clazz to instance
         }
@@ -286,7 +289,7 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
         // sock.setHeader("Cache-Control", "public, max-age=5")
         try{
             val env=mutableMapOf<String,Any>("scriptPath" to file.absolutePath)
-            for((k,v) in scriptExtras)env[k]=v
+            if(handlePath!=null)env["handlePath"]=handlePath
             execute(sock, file, isScript, env)
         }catch(err: Exception){
             val sw=StringWriter()

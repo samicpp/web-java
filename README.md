@@ -4,8 +4,8 @@ java web server using samicpp/java-http
 uses GraalVM JDK24 and has not been tested anywhere else
 
 ## Polyglot
-This server supports executing JavaScript and Python code.
-note: you cannot freely pass some values around as that may trigger a thread access violation
+This webserver supports executing JavaScript and Python code.
+
 
 ## TODO
 - [x] serve files
@@ -13,6 +13,9 @@ note: you cannot freely pass some values around as that may trigger a thread acc
 - [ ] allow configuring everything about the server
 - [x] support tls
 - [x] support dynamic content
+- [x] support JavaScript and Python scripting through GraalVM polyglot
 - [ ] add option for searching similar files when file doesnt exist
 - [x] allow http2 use through alpn
 - [ ] ~~implement h2c upgrade~~
+- [x] support Java jar/class plugins
+

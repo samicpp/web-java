@@ -4,11 +4,16 @@ import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 import java.util.jar.JarFile
+import java.nio.file.Path
 import dev.samicpp.http.HttpSocket
 
 interface HttpHandler{
-    var alive: Boolean;
-    fun handle(sock: HttpSocket);
+    // var alive: Boolean;
+    fun getAlive(): Boolean;
+    fun setAlive(alive: Boolean);
+
+    fun init(self: File);
+    fun handle(sock: HttpSocket, handlePath: Path?);
 }
 
 

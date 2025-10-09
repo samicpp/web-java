@@ -25,6 +25,10 @@ import kotlin.io.path.absolutePathString
 import kotlin.text.startsWith
 import kotlin.collections.findLast
 import kotlinx.serialization.json.*
+import java.util.concurrent.ConcurrentHashMap
+
+
+val classCache=ConcurrentHashMap<String,Pair<Class<*>,HttpHandler>>()
 
 fun httpDate():String {
     val now=ZonedDateTime.now(ZoneOffset.UTC)
@@ -222,7 +226,6 @@ fun dirHandler(sock:HttpSocket,path:Path){
     }
 }
 
-// TODO: implement custom dynamic `*.dyn.*` files (jsdyn and pydyn)
 fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf()){
     val file=path.toFile()
     val fileName=path.fileName.toString()
@@ -230,22 +233,23 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
     val def=mimeMap[last]
     var isScript:String?=null
     var isSpecial:String?=null
+    var isJava:String?=null
 
     sock.status=200
     sock.statusMessage="OK"
 
-    if(fileName.endsWith(".poly.js")) {
-        isScript="js"
-    } else if(fileName.endsWith(".poly.py")) {
-        isScript="python"
-    } else if(fileName.endsWith(".link")) {
-        isSpecial="link"
-    } else if(fileName.endsWith(".redirect")) {
-        isSpecial="redirect"
-    } else if(fileName.contains(".var.")) {
+    if(fileName.endsWith(".class")) isJava="class"
+    else if(fileName.endsWith(".jar")) isJava="jar"
+    else if(fileName.endsWith(".poly.js")) isScript="js"
+    else if(fileName.endsWith(".poly.py")) isScript="python"
+    else if(fileName.endsWith(".link")) isSpecial="link"
+    else if(fileName.endsWith(".redirect")) isSpecial="redirect"
+    else if(fileName.contains(".var.")) {
         isSpecial="var"
         if(def!=null)sock.setHeader("Content-Type", "$def; charset=utf-8")
-    } else if(def!=null) {
+    }
+
+    else if(def!=null) {
         if(def.startsWith("text")) sock.setHeader("Content-Type", "$def; charset=utf-8")
         else sock.setHeader("Content-Type", def)
     } else {
@@ -254,7 +258,29 @@ fun fileHandler(sock:HttpSocket,path:Path,scriptExtras:Map<String,Any> =mapOf())
 
     // println("file located at ${file.absolutePath}")
 
-    if(isScript!=null){
+    if(isJava!=null){
+        println("importing java class")
+        val entry=classCache[file.absolutePath]
+        // val cclass=entry?.first
+        val plugin=entry?.second
+
+        if(plugin!=null&&plugin.alive){// cclass!!.getDeclaredField("alive").getBoolean(cinsta)
+            println("class still available")
+
+            // val handle=cclass.getMethod("handle", sock.javaClass)
+            plugin.handle(sock)
+        } else {
+            println("class not available")
+
+            val clazz=loadClass(file, isJava)
+            val instance=clazz.getDeclaredConstructor().newInstance() as HttpHandler
+            // val handle=clazz.getMethod("handle", sock.javaClass)
+            // handle.invoke(instance, sock)
+            instance.handle(sock)
+
+            classCache[file.absolutePath]=clazz to instance
+        }
+    } else if(isScript!=null){
         println("handling script")
         sock.setHeader("Content-Type", "text/html; charset=utf-8")
         // sock.setHeader("Cache-Control", "public, max-age=5")
